@@ -11,6 +11,8 @@ import br.com.infoservic.ctoConference.repository.PortasRepository;
 import br.com.infoservic.ctoConference.repository.UsuarioRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -75,14 +77,12 @@ public class ConferenciaService {
 
     }
 
-
     // Listar todas as conferencias
-    public List<ConferenciaExibicaoDto> listarTodasAsConferencias(){
+    public Page<ConferenciaExibicaoDto> listarTodasAsConferencias(Pageable paginacaoTodasConferencias){
         return conferenciaRepository
-                .findAllByOrderByDataConferenciaDesc()
-                .stream()
-                .map(ConferenciaExibicaoDto::new)
-                .toList();
+                .findAll(paginacaoTodasConferencias)
+                .map(ConferenciaExibicaoDto::new);
+
     }
 
     //Lista ultimas 5 conferencias
