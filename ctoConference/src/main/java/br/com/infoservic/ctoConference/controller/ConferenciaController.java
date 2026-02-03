@@ -3,6 +3,7 @@ package br.com.infoservic.ctoConference.controller;
 import br.com.infoservic.ctoConference.dto.ConferenciaCadastroDto;
 import br.com.infoservic.ctoConference.dto.ConferenciaExibicaoDto;
 import br.com.infoservic.ctoConference.service.ConferenciaService;
+import br.com.infoservic.ctoConference.specifications.ConferenciaSpec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -43,8 +44,8 @@ public class ConferenciaController {
 
     @GetMapping("/conferencias/listar")
     @ResponseStatus(HttpStatus.OK)
-    public Page<ConferenciaExibicaoDto> listarTodasAsConferencias(@PageableDefault(size = 10, page = 0, sort = "dataConferencia", direction = Sort.Direction.DESC) Pageable paginacaoTodasConferencias){
-        return service.listarTodasAsConferencias(paginacaoTodasConferencias);
+    public Page<ConferenciaExibicaoDto> listarTodasAsConferencias(@RequestParam(required = false) String caixa, @PageableDefault(size = 10, page = 0, sort = "dataConferencia", direction = Sort.Direction.DESC) Pageable paginacaoTodasConferencias){
+        return service.listarTodasAsConferencias(paginacaoTodasConferencias, ConferenciaSpec.ContemCaixa(caixa));
     }
 
 

@@ -13,6 +13,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -78,9 +79,9 @@ public class ConferenciaService {
     }
 
     // Listar todas as conferencias
-    public Page<ConferenciaExibicaoDto> listarTodasAsConferencias(Pageable paginacaoTodasConferencias){
+    public Page<ConferenciaExibicaoDto> listarTodasAsConferencias(Pageable paginacaoTodasConferencias, Specification<Conferencia> spec){
         return conferenciaRepository
-                .findAll(paginacaoTodasConferencias)
+                .findAll(spec, paginacaoTodasConferencias)
                 .map(ConferenciaExibicaoDto::new);
 
     }
