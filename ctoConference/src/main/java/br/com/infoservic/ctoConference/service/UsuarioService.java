@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioService {
@@ -61,13 +62,13 @@ public class UsuarioService {
         }
     }
 
-    public UsuarioExibicaoDto buscarPeloNome(String nome){
-        Optional<Usuario> usuarioOptional = usuarioRepository.findByNome(nome);
-        if (usuarioOptional.isPresent()){
-            return new UsuarioExibicaoDto(usuarioOptional.get());
-        } else {
-            throw new NaoEncontradoException("Usuario não encontrado!");
-        }
+    public List<UsuarioExibicaoDto> buscarPeloNome (String termo){
+        List<Usuario> usuarios = usuarioRepository
+                .findByNomeContainingIgnoreCaseOrderByNomeAsc(termo);
+
+        return usuarios.stream()
+                .map(UsuarioExibicaoDto::new)
+                .collect(Collectors.toList());
     }
 
 

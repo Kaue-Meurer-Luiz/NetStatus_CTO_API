@@ -44,10 +44,20 @@ public class UsuarioController {
         return service.atualizar(usuario);
     }
 
-    @GetMapping("/usuarios/nome/{nome}")
+
+    @GetMapping("/usuarios/buscar")
     @ResponseStatus(HttpStatus.OK)
-    public UsuarioExibicaoDto buscarUsuarioPorNome(@PathVariable String nome){
-        return service.buscarPeloNome(nome);
+    public List<UsuarioExibicaoDto> buscarUsuarios(
+            @RequestParam(required = false, defaultValue = "") String termo){
+        if (termo.length() > 100) {
+        throw new IllegalArgumentException("Termo de busca muito longo!");
+        }
+        termo = termo.trim();
+
+        if (termo == null || termo.trim().isEmpty()){
+            return service.listarTodosUsuarios();
+        }
+        return service.buscarPeloNome(termo);
     }
 
     @GetMapping("/usuarios/id/{id}")
