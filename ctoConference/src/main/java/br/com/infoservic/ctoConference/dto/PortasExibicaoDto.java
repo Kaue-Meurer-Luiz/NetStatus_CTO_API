@@ -3,7 +3,7 @@ package br.com.infoservic.ctoConference.dto;
 import br.com.infoservic.ctoConference.model.Portas;
 
 public record PortasExibicaoDto(
-        //Long portaId,
+        Long portaId,
         Integer nrPorta,
         String cliente,
         String status,
@@ -12,7 +12,7 @@ public record PortasExibicaoDto(
 ) {
     public PortasExibicaoDto(Portas portas){
         this(
-                //portas.getPortaId(),
+                portas.getPortaId(),
                 portas.getNrPorta(),
                 portas.getCliente(),
                 portas.getStatus(),

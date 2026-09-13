@@ -1,8 +1,7 @@
 package br.com.infoservic.ctoConference.service;
 
-import br.com.infoservic.ctoConference.dto.ConferenciaCadastroDto;
-import br.com.infoservic.ctoConference.dto.ConferenciaExibicaoDto;
-import br.com.infoservic.ctoConference.dto.UsuarioExibicaoDto;
+import br.com.infoservic.ctoConference.dto.*;
+import br.com.infoservic.ctoConference.exception.NaoEncontradoException;
 import br.com.infoservic.ctoConference.model.Conferencia;
 import br.com.infoservic.ctoConference.model.Portas;
 import br.com.infoservic.ctoConference.model.Usuario;
@@ -15,10 +14,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ConferenciaService {
@@ -93,4 +96,115 @@ public class ConferenciaService {
                 .map(ConferenciaExibicaoDto::new)
                 .toList();
     }
+
+    @Transactional
+    public ConferenciaExibicaoDto atualizarConferencia(ConferenciaAtualizacaoDto conferenciadto){
+        // 1. Busca a conferência
+        Conferencia conferencia = conferenciaRepository
+                .findById(conferenciadto.idConferencia())
+                .orElseThrow(()->
+                        new RuntimeException("Conferência não encontrada!")
+                );
+        // 2. Busca os técnicos
+        Usuario tecInterno = usuarioRepository
+                .findById(conferenciadto.tecInternoId())
+                .orElseThrow(() ->
+                        new RuntimeException("Técnico interno não encontrado!")
+                );
+        Usuario tecExterno = usuarioRepository
+                .findById(conferenciadto.tecExternoId())
+                .orElseThrow(()->
+                        new RuntimeException("Técnico externo não encontrado!")
+                );
+
+        // 3. Atualiza os dados da conferência
+        conferencia.setCaixa(conferenciadto.caixa());
+        conferencia.setCidade(conferenciadto.cidade());
+        conferencia.setDataConferencia(conferenciadto.dataConferencia());
+        conferencia.setObservacao(conferenciadto.observacao());
+        conferencia.setTecInternoId(tecInterno);
+        conferencia.setTecExternoId(tecExterno);
+
+        // 4. TRATAMENTO DE EXCLUSÃO DAS PORTAS
+        // IDs que atualmente pertencem à conferência
+        Set<Long> idsExistentes = conferencia.getPortas()
+                .stream()
+                .map(Portas::getPortaId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // IDs enviados pelo frontend
+        Set<Long> idsRecebidos = conferenciadto.portas()
+                .stream()
+                .map(PortasAtualizacaoDto::portaId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // Valida se todas as portas recebidas realmente
+        // pertencem à conferência que está sendo editada
+        for (Long portaId : idsRecebidos) {
+
+            if (!idsExistentes.contains(portaId)) {
+                throw new RuntimeException(
+                        "A porta " + portaId + " não pertence à conferência " + conferencia.getIdConferencia());
+            }
+        }
+
+
+        // Remove as portas antigas que não vieram no PUT
+        conferencia.getPortas().removeIf(porta ->
+                porta.getPortaId() != null
+                        && !idsRecebidos.contains(porta.getPortaId())
+        );
+
+        // 5. ATUALIZA OU ADICIONA PORTAS
+        for (PortasAtualizacaoDto portaDto : conferenciadto.portas()){
+            if (portaDto.portaId() != null){
+
+                // Porta existente -> UPDATE
+                Portas porta = conferencia.getPortas()
+                        .stream()
+                        .filter (p -> p.getPortaId().equals(portaDto.portaId()))
+                        .findFirst()
+                        .orElseThrow(() ->
+                                new RuntimeException("Porta " + portaDto.portaId()+" não pertence a esta conferência!"));
+
+                porta.setNrPorta(portaDto.nrPorta());
+                porta.setCliente(portaDto.cliente());
+                porta.setStatus(portaDto.status());
+                porta.setPlotado(portaDto.plotado());
+                porta.setObservacao(portaDto.observacao());
+            } else {
+                // Porta nova -> INSERT
+                Portas novaPorta = new Portas();
+
+                novaPorta.setNrPorta(portaDto.nrPorta());
+                novaPorta.setCliente(portaDto.cliente());
+                novaPorta.setStatus(portaDto.status());
+                novaPorta.setPlotado(portaDto.plotado());
+                novaPorta.setObservacao(portaDto.observacao());
+
+                conferencia.addPorta(novaPorta);
+            }
+        }
+
+        // 6. Salva
+        Conferencia conferenciaSalva =
+                conferenciaRepository.save(conferencia);
+
+        // 7. Converte Entity -> DTO
+        return new ConferenciaExibicaoDto(conferenciaSalva);
+
+    }
+
+    public void excluir(Long id){
+        Optional<Conferencia> conferenciaOptional = conferenciaRepository.findById(id);
+        if (conferenciaOptional.isPresent()){
+            conferenciaRepository.delete(conferenciaOptional.get());
+        } else {
+            throw new NaoEncontradoException("Conferencia não encontrada!");
+        }
+    }
+
+
 }

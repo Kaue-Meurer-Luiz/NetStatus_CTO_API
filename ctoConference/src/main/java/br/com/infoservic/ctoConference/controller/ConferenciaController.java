@@ -1,7 +1,9 @@
 package br.com.infoservic.ctoConference.controller;
 
+import br.com.infoservic.ctoConference.dto.ConferenciaAtualizacaoDto;
 import br.com.infoservic.ctoConference.dto.ConferenciaCadastroDto;
 import br.com.infoservic.ctoConference.dto.ConferenciaExibicaoDto;
+import br.com.infoservic.ctoConference.model.Conferencia;
 import br.com.infoservic.ctoConference.service.ConferenciaService;
 import br.com.infoservic.ctoConference.specifications.ConferenciaSpec;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +37,7 @@ public class ConferenciaController {
 
 
     @GetMapping(value = "/conferencias", params = {"dataInicio", "dataFinal"})
+    @ResponseStatus(HttpStatus.OK)
     public List<ConferenciaExibicaoDto> listarConferenciasPorPeriodo(
             @RequestParam LocalDate dataInicio,
             @RequestParam LocalDate dataFinal
@@ -55,6 +58,18 @@ public class ConferenciaController {
         return service.listarUltimasCinco();
     }
 
+
+    @DeleteMapping("/conferencias/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void excluir(@PathVariable Long id){
+        service.excluir(id);
+    }
+
+    @PutMapping("/conferencias")
+    @ResponseStatus(HttpStatus.OK)
+    public ConferenciaExibicaoDto atualizar(@RequestBody ConferenciaAtualizacaoDto conferencia){
+        return service.atualizarConferencia(conferencia);
+    }
 
 
 }
